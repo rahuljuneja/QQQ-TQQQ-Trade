@@ -1,5 +1,10 @@
 {
   "starting_capital": 10000,
-  "reference_snapshot": null,
+  "reference_snapshot": {
+    "status": "NOT_DEPLOYED",
+    "created_at": "2026-04-20T16:44:34.525097+00:00",
+    "qqq": 645.39,
+    "tqqq": 57.7
+  },
   "positions": []
 }

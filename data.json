@@ -1,7 +1,26 @@
 {
-  "qqq": 648.85,
-  "tqqq": 58.59,
+  "qqq": 645.39,
+  "tqqq": 57.7,
   "scenario": "Neutral",
   "action": "DO NOTHING",
-  "timestamp": "2026-04-20T01:51:38.667110+00:00"
+  "timestamp": "2026-04-20T16:44:34.525097+00:00",
+  "prev_scenario": "Neutral",
+  "prev_action": "DO NOTHING",
+  "change": "NO_CHANGE",
+  "portfolio_value": 10000.0,
+  "pnl": 0,
+  "pnl_percent": 0.0,
+  "starting_capital": 10000.0,
+  "reference_snapshot": {
+    "status": "NOT_DEPLOYED",
+    "created_at": "2026-04-20T16:44:34.525097+00:00",
+    "qqq": 645.39,
+    "tqqq": 57.7
+  },
+  "positions": [],
+  "position_summary": {
+    "open": 0,
+    "not_deployed": 0,
+    "closed": 0
+  }
 }
