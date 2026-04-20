@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daily Trading Decision Dashboard</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f7fb;
+        --panel: #ffffff;
+        --text: #0f172a;
+        --muted: #475569;
+        --accent: #0f766e;
+        --action-bg: #111827;
+        --action-text: #f8fafc;
+        --border: #dbe4f0;
+        --shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle at top, rgba(15, 118, 110, 0.08), transparent 35%),
+          linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+        color: var(--text);
+        font-family: "Segoe UI", Arial, sans-serif;
+      }
+
+      .shell {
+        width: min(100%, 720px);
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: var(--shadow);
+        text-align: center;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(2rem, 4vw, 2.8rem);
+      }
+
+      .subtitle,
+      .timestamp,
+      .status {
+        color: var(--muted);
+      }
+
+      .subtitle {
+        margin: 0 0 28px;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      .metric {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 20px 16px;
+        background: #fbfdff;
+      }
+
+      .metric-label {
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .metric-value {
+        font-size: clamp(1.7rem, 4vw, 2.2rem);
+        font-weight: 700;
+      }
+
+      .scenario {
+        margin: 0 0 22px;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+
+      .action-box {
+        margin-bottom: 20px;
+        padding: 24px 18px;
+        border-radius: 20px;
+        background: var(--action-bg);
+        color: var(--action-text);
+      }
+
+      .action-label {
+        font-size: 0.95rem;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: #9ca3af;
+      }
+
+      .action-text {
+        margin-top: 10px;
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 800;
+        line-height: 1.1;
+      }
+
+      .timestamp {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .status {
+        margin-top: 14px;
+        min-height: 1.25rem;
+        font-size: 0.95rem;
+      }
+
+      .error {
+        color: #b91c1c;
+      }
+
+      @media (max-width: 640px) {
+        .card {
+          padding: 24px;
+        }
+
+        .metrics {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="card">
+        <h1>Daily Trading Decision Dashboard</h1>
+        <p class="subtitle">Live snapshot from the latest committed <code>data.json</code></p>
+
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-label">QQQ</div>
+            <div class="metric-value" id="qqq">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">TQQQ</div>
+            <div class="metric-value" id="tqqq">--</div>
+          </div>
+        </div>
+
+        <p class="scenario" id="scenario">Loading scenario...</p>
+
+        <div class="action-box">
+          <div class="action-label">Action</div>
+          <div class="action-text" id="action">Loading...</div>
+        </div>
+
+        <p class="timestamp" id="timestamp">Waiting for data...</p>
+        <div class="status" id="status"></div>
+      </section>
+    </main>
+
+    <script>
+      const money = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+      });
+
+      function setError(message) {
+        const status = document.getElementById("status");
+        status.textContent = message;
+        status.classList.add("error");
+      }
+
+      async function loadDashboard() {
+        try {
+          const response = await fetch("./data.json", { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error(`Unable to fetch data.json (${response.status})`);
+          }
+
+          const data = await response.json();
+          document.getElementById("qqq").textContent = money.format(data.qqq);
+          document.getElementById("tqqq").textContent = money.format(data.tqqq);
+          document.getElementById("scenario").textContent = `Scenario: ${data.scenario}`;
+          document.getElementById("action").textContent = data.action;
+
+          const timestamp = new Date(data.timestamp);
+          document.getElementById("timestamp").textContent = Number.isNaN(timestamp.getTime())
+            ? `Updated: ${data.timestamp}`
+            : `Updated: ${timestamp.toLocaleString()}`;
+        } catch (error) {
+          document.getElementById("scenario").textContent = "Unable to load scenario";
+          document.getElementById("action").textContent = "Data unavailable";
+          setError(error.message);
+        }
+      }
+
+      loadDashboard();
+    </script>
+  </body>
+</html>
