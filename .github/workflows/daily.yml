@@ -1,0 +1,44 @@
+name: Daily Trading Update
+
+on:
+  schedule:
+    - cron: "45 15 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Ensure Los Angeles run window
+        run: |
+          if [ "$(TZ=America/Los_Angeles date +%H:%M)" != "08:45" ]; then
+            echo "Skipping run outside 08:45 America/Los_Angeles."
+            exit 0
+          fi
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run daily job
+        run: python job.py
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f data.json
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: update daily trading data"
+          git push
