@@ -96,6 +96,13 @@
         font-weight: 600;
       }
 
+      .performance {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin: 0 0 28px;
+      }
+
       .action-box {
         margin-bottom: 20px;
         padding: 24px 18px;
@@ -133,12 +140,25 @@
         color: #b91c1c;
       }
 
+      .positive {
+        color: #16a34a;
+      }
+
+      .negative {
+        color: #dc2626;
+      }
+
+      .neutral {
+        color: #64748b;
+      }
+
       @media (max-width: 640px) {
         .card {
           padding: 24px;
         }
 
-        .metrics {
+        .metrics,
+        .performance {
           grid-template-columns: 1fr;
         }
       }
@@ -164,6 +184,21 @@
         <p class="scenario" id="scenario">Loading scenario...</p>
         <p class="timestamp" id="change">Change: --</p>
 
+        <div class="performance">
+          <div class="metric">
+            <div class="metric-label">Portfolio Value</div>
+            <div class="metric-value" id="portfolio-value">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">PnL</div>
+            <div class="metric-value" id="pnl">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">PnL %</div>
+            <div class="metric-value" id="pnl-percent">--</div>
+          </div>
+        </div>
+
         <div class="action-box">
           <div class="action-label">Action</div>
           <div class="action-text" id="action">Loading...</div>
@@ -179,6 +214,10 @@
         style: "currency",
         currency: "USD",
       });
+      const percent = new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
 
       function setError(message) {
         const status = document.getElementById("status");
@@ -186,23 +225,60 @@
         status.classList.add("error");
       }
 
+      function setPnLColor(element, value) {
+        element.classList.remove("positive", "negative", "neutral");
+        if (value > 0) {
+          element.classList.add("positive");
+        } else if (value < 0) {
+          element.classList.add("negative");
+        } else {
+          element.classList.add("neutral");
+        }
+      }
+
       async function loadDashboard() {
         try {
-          const response = await fetch("./data.json", { cache: "no-store" });
+          const response = await fetch(`./data.json?t=${Date.now()}`);
           if (!response.ok) {
             throw new Error(`Unable to fetch data.json (${response.status})`);
           }
 
           const data = await response.json();
+          const scenarioEl = document.getElementById("scenario");
+          const actionEl = document.getElementById("action");
+          const portfolioValueEl = document.getElementById("portfolio-value");
+          const pnlEl = document.getElementById("pnl");
+          const pnlPercentEl = document.getElementById("pnl-percent");
+
           document.getElementById("qqq").textContent = money.format(data.qqq);
           document.getElementById("tqqq").textContent = money.format(data.tqqq);
-          document.getElementById("scenario").textContent = `Scenario: ${data.scenario}`;
+          scenarioEl.textContent = `Scenario: ${data.scenario}`;
           document.getElementById("change").innerText = "Change: " + data.change;
-          document.getElementById("action").textContent = data.action;
+          actionEl.textContent = data.action;
+          portfolioValueEl.textContent = money.format(data.portfolio_value);
+          pnlEl.textContent = money.format(data.pnl);
+          pnlPercentEl.textContent = `${percent.format(data.pnl_percent)}%`;
 
-          if (data.change === "SCENARIO_CHANGED") {
-            document.getElementById("scenario").style.color = "#f59e0b";
+          if (data.scenario === "Strong Bull") {
+            scenarioEl.style.color = "#22c55e";
+          } else if (data.scenario === "Neutral") {
+            scenarioEl.style.color = "#94a3b8";
+          } else if (data.scenario === "Danger") {
+            scenarioEl.style.color = "#ef4444";
+          } else {
+            scenarioEl.style.color = "#f59e0b";
           }
+
+          actionEl.style.color = "";
+          if (data.scenario === "Danger") {
+            actionEl.style.color = "#ef4444";
+          } else if (data.scenario === "Strong Bull") {
+            actionEl.style.color = "#22c55e";
+          }
+
+          setPnLColor(portfolioValueEl, data.pnl);
+          setPnLColor(pnlEl, data.pnl);
+          setPnLColor(pnlPercentEl, data.pnl);
 
           const timestamp = new Date(data.timestamp);
           document.getElementById("timestamp").textContent = Number.isNaN(timestamp.getTime())
@@ -212,6 +288,9 @@
           document.getElementById("scenario").textContent = "Unable to load scenario";
           document.getElementById("change").innerText = "Change: unavailable";
           document.getElementById("action").textContent = "Data unavailable";
+          document.getElementById("portfolio-value").textContent = "--";
+          document.getElementById("pnl").textContent = "--";
+          document.getElementById("pnl-percent").textContent = "--";
           setError(error.message);
         }
       }
